@@ -16,8 +16,10 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.HeadBucketRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.waiters.WaiterParameters;
 import com.aws.springbootlocalstackaws.service.AwsS3Service;
 
 import lombok.AllArgsConstructor;
@@ -33,10 +35,8 @@ public class S3ServiceImpl implements AwsS3Service {
     @Override
     public List<String> getAllDocumentsFromBuckets(String bucketName) {
 
-        if (!amazonS3.doesBucketExistV2(bucketName)) {
-            log.info("Bucket name is not available, try again with different Bucket name");
-            throw new NoSuchElementException("Bucket name is not available");
-        }
+        this.validateIfBucketExist(bucketName);
+
         return amazonS3.listObjectsV2(bucketName).getObjectSummaries().stream()
                 .map(S3ObjectSummary::getKey)
                 .collect(Collectors.toList());
@@ -49,16 +49,29 @@ public class S3ServiceImpl implements AwsS3Service {
 
     @Override
     public void createBucket(String bucketName) {
-        /*if (amazonS3.doesBucketExistV2(bucketName)) {
-            throw new ValidationException("Bucket name is not available."
-                    + " Try again with a different Bucket name.");
-        }*/
+
+        this.validateIfBucketIsAvailable(bucketName);
+        
         amazonS3.createBucket(bucketName);
         log.info("Request to create " + bucketName + " sent");
     }
 
     @Override
-    public void uploadDocument(MultipartFile file, String bucketName)
+    public void deleteBucketByName(String bucketName) {
+
+        this.validateIfBucketExist(bucketName);
+
+        amazonS3.deleteBucket(bucketName);
+
+        // assure bucket is deleted
+        amazonS3.waiters().bucketNotExists().run(new WaiterParameters<>(
+                new HeadBucketRequest(bucketName)));
+
+        log.info("Bucket " + bucketName + " is deleted");
+    }
+
+
+    public void uploadDocument_(MultipartFile file, String bucketName)
             throws IOException {
 
         String tempFileName = UUID.randomUUID() + file.getName();
@@ -69,22 +82,43 @@ public class S3ServiceImpl implements AwsS3Service {
         tempFile.deleteOnExit();
     }
 
-
-    public void uploadDocument_v2(MultipartFile file, String bucketName) {
+    @Override
+    public void uploadDocument(MultipartFile file, String bucketName) {
         try {
+
+            this.validateIfBucketExist(bucketName);
+
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(file.getSize());
             amazonS3.putObject(bucketName, file.getName(), file.getInputStream(), metadata);
             log.info("File uploaded: " + file.getName());
+
         } catch (IOException ioe) {
             log.error("IOException: " + ioe.getMessage());
+
         } catch (AmazonServiceException serviceException) {
-            log.info("AmazonServiceException: "+ serviceException.getMessage());
+            log.info("AmazonServiceException: " + serviceException.getMessage());
             throw serviceException;
+
         } catch (AmazonClientException clientException) {
             log.info("AmazonClientException Message: " + clientException.getMessage());
             throw clientException;
         }
         log.error("File not uploaded: " + file.getName());
     }
+
+    private void validateIfBucketExist(String bucketName) {
+        if (!amazonS3.doesBucketExistV2(bucketName)) {
+            log.info("Bucket not exist, try again with different Bucket name");
+            throw new NoSuchElementException("Bucket not exist");
+        }
+    }
+
+    private void validateIfBucketIsAvailable(String bucketName) {
+        if (amazonS3.doesBucketExistV2(bucketName)) {
+            throw new ValidationException("Bucket name is not available."
+                    + " Try again with a different Bucket name.");
+        }
+    }
+
 }

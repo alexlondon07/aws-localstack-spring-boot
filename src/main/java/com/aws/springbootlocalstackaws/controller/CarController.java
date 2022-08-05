@@ -1,7 +1,5 @@
 package com.aws.springbootlocalstackaws.controller;
 
-import java.io.IOException;
-import java.net.URI;
 import java.util.List;
 
 import javax.validation.Valid;

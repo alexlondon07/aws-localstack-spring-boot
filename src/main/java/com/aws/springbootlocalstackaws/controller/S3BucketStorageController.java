@@ -9,6 +9,7 @@ import javax.validation.ValidationException;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -62,7 +63,17 @@ public class S3BucketStorageController {
         return ResponseEntity.ok(bucketName);
     }
 
-    public void validateBucketName(String bucketName) {
+    @DeleteMapping
+    public ResponseEntity<String> deleteBucket(@Param("bucketName") String bucketName) {
+
+        this.validateBucketName(bucketName);
+
+        s3Service.deleteBucketByName(bucketName);
+
+        return ResponseEntity.ok(bucketName);
+    }
+
+    private void validateBucketName(String bucketName) {
         if (Strings.isEmpty(bucketName)) {
             throw new ValidationException("Bucket name is required");
         }

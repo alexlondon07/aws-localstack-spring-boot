@@ -15,5 +15,7 @@ public interface AwsS3Service {
 
     void createBucket(String bucketName);
 
+    void deleteBucketByName(String bucketName);
+
     void uploadDocument(MultipartFile file, String bucketName) throws IOException;
 }
