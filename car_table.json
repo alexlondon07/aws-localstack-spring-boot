@@ -1,0 +1,36 @@
+{
+    "TableName": "Car",
+    "AttributeDefinitions": [
+        {
+            "AttributeName": "id",
+            "AttributeType": "S"
+        }
+    ],
+    "KeySchema": [
+        {
+            "AttributeName": "id",
+            "KeyType": "HASH"
+        }
+    ],
+    "ProvisionedThroughput": {
+        "ReadCapacityUnits": 5,
+        "WriteCapacityUnits": 5
+    }
+}
+
+
+{
+    "TableName": "Car",
+    "KeySchema": [
+        { "AttributeName": "Artist", "KeyType": "HASH" },
+        { "AttributeName": "SongTitle", "KeyType": "RANGE" }
+    ],
+    "AttributeDefinitions": [
+        { "AttributeName": "Artist", "AttributeType": "S" },
+        { "AttributeName": "SongTitle", "AttributeType": "S" }
+    ],
+    "ProvisionedThroughput": {
+        "ReadCapacityUnits": 5,
+        "WriteCapacityUnits": 5
+    }
+}
