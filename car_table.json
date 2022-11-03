@@ -19,7 +19,7 @@
 }
 
 
-{
+/*{
     "TableName": "Car",
     "KeySchema": [
         { "AttributeName": "Artist", "KeyType": "HASH" },
@@ -33,4 +33,4 @@
         "ReadCapacityUnits": 5,
         "WriteCapacityUnits": 5
     }
-}
+}*/

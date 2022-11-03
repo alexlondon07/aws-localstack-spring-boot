@@ -7,7 +7,12 @@ import java.util.List;
 import javax.validation.ValidationException;
 
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.repository.query.Param;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.aws.springbootlocalstackaws.model.DownloadedResource;
 import com.aws.springbootlocalstackaws.service.AwsS3Service;
 
 import lombok.RequiredArgsConstructor;
@@ -30,7 +37,7 @@ public class S3BucketStorageController {
     private final AwsS3Service s3Service;
 
     @GetMapping
-    public List<String> getAllDocumentsFromBuckets(@Param("bucketName") String bucketName) {
+    public List<S3ObjectSummary> getAllDocumentsFromBuckets(@Param("bucketName") String bucketName) {
 
         this.validateBucketName(bucketName);
 
@@ -62,6 +69,36 @@ public class S3BucketStorageController {
 
         return ResponseEntity.ok(bucketName);
     }
+
+
+    @GetMapping("/download-file")
+    public ResponseEntity<Resource> downloadFile(@Param("keyName") String keyName,
+                                                 @Param("bucketName") String bucketName) {
+
+        this.validateBucketName(bucketName);
+
+        DownloadedResource downloadedResource = s3Service.download(keyName, bucketName);
+
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + downloadedResource.getFileName())
+                .contentLength(downloadedResource.getContentLength()).contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(new InputStreamResource(downloadedResource.getInputStream()));
+    }
+
+
+    @GetMapping(value = "/download-fileV2")
+    public ResponseEntity<ByteArrayResource> downloadFileV2(@Param(value = "keyName") final String keyName,
+                                                            @Param("bucketName") String bucketName) {
+        final byte[] data = s3Service.downloadFileV2(keyName, bucketName);
+        final ByteArrayResource resource = new ByteArrayResource(data);
+
+        return ResponseEntity
+                .ok()
+                .contentLength(data.length)
+                .header("Content-type", "application/octet-stream")
+                .header("Content-disposition", "attachment; filename=\"" + keyName.concat(".pdf") + "\"")
+                .body(resource);
+    }
+
 
     @DeleteMapping
     public ResponseEntity<String> deleteBucket(@Param("bucketName") String bucketName) {

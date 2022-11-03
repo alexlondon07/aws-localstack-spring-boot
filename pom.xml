@@ -50,6 +50,15 @@
 			<artifactId>spring-data-dynamodb</artifactId>
 			<version>5.1.0</version>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-aws-messaging -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-aws-messaging</artifactId>
+			<version>2.2.6.RELEASE</version>
+		</dependency>
+
+
 		<!-- https://mvnrepository.com/artifact/cloud.localstack/localstack-utils -->
 		<dependency>
 			<groupId>cloud.localstack</groupId>
